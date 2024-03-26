@@ -1,0 +1,311 @@
+
+Report/.vscode/
+### LaTeX ###
+## Core latex/pdflatex auxiliary files:
+Report/*.aux
+Report/*.lof
+Report/*.log
+Report/*.lot
+Report/*.fls
+Report/*.out
+Report/*.toc
+Report/*.fmt
+Report/*.fot
+Report/*.cb
+Report/*.cb2
+.Report/*.lb
+
+## Intermediate documents:
+Report/*.dvi
+Report/*.xdv
+*-converted-to.*
+# these rules might exclude image files for figures etc.
+# Report/*.ps
+# Report/*.eps
+# Report/*.pdf
+
+## Generated if empty string is given at "Please type another file name for output:"
+.pdf
+
+## Bibliography auxiliary files (bibtex/biblatex/biber):
+Report/*.bbl
+Report/*.bcf
+Report/*.blg
+*-blx.aux
+*-blx.bib
+Report/*.run.xml
+
+## Build tool auxiliary files:
+Report/*.fdb_latexmk
+Report/*.synctex
+Report/*.synctex(busy)
+Report/*.synctex.gz
+Report/*.synctex.gz(busy)
+Report/*.pdfsync
+
+## Build tool directories for auxiliary files
+# latexrun
+latex.out/
+
+## Auxiliary and intermediate files from other packages:
+# algorithms
+Report/*.alg
+Report/*.loa
+
+# achemso
+acs-Report/*.bib
+
+# amsthm
+Report/*.thm
+
+# beamer
+Report/*.nav
+Report/*.pre
+Report/*.snm
+Report/*.vrb
+
+# changes
+Report/*.soc
+
+# comment
+Report/*.cut
+
+# cprotect
+Report/*.cpt
+
+# elsarticle (documentclass of Elsevier journals)
+Report/*.spl
+
+# endnotes
+Report/*.ent
+
+# fixme
+Report/*.lox
+
+# feynmf/feynmp
+Report/*.mf
+Report/*.mp
+Report/*.t[1-9]
+Report/*.t[1-9][0-9]
+Report/*.tfm
+
+#(r)(e)ledmac/(r)(e)ledpar
+Report/*.end
+Report/*.?end
+Report/*.[1-9]
+Report/*.[1-9][0-9]
+Report/*.[1-9][0-9][0-9]
+Report/*.[1-9]R
+Report/*.[1-9][0-9]R
+Report/*.[1-9][0-9][0-9]R
+Report/*.eledsec[1-9]
+Report/*.eledsec[1-9]R
+Report/*.eledsec[1-9][0-9]
+Report/*.eledsec[1-9][0-9]R
+Report/*.eledsec[1-9][0-9][0-9]
+Report/*.eledsec[1-9][0-9][0-9]R
+
+# glossaries
+Report/*.acn
+Report/*.acr
+Report/*.glg
+Report/*.glo
+Report/*.gls
+Report/*.glsdefs
+Report/*.lzo
+Report/*.lzs
+Report/*.slg
+Report/*.slo
+Report/*.sls
+
+# uncomment this for glossaries-extra (will ignore makeindex's style files!)
+# Report/*.ist
+
+# gnuplot
+Report/*.gnuplot
+Report/*.table
+
+# gnuplottex
+*-gnuplottex-*
+
+# gregoriotex
+Report/*.gaux
+Report/*.glog
+Report/*.gtex
+
+# htlatex
+Report/*.4ct
+Report/*.4tc
+Report/*.idv
+Report/*.lg
+Report/*.trc
+Report/*.xref
+
+# hyperref
+Report/*.brf
+
+# knitr
+*-concordance.tex
+# TODO Uncomment the next line if you use knitr and want to ignore its generated tikz files
+# Report/*.tikz
+*-tikzDictionary
+
+# listings
+Report/*.lol
+
+# luatexja-ruby
+Report/*.ltjruby
+
+# makeidx
+Report/*.idx
+Report/*.ilg
+Report/*.ind
+
+# minitoc
+Report/*.maf
+Report/*.mlf
+Report/*.mlt
+Report/*.mtc[0-9]*
+Report/*.slf[0-9]*
+Report/*.slt[0-9]*
+Report/*.stc[0-9]*
+
+# minted
+_minted*
+Report/*.pyg
+
+# morewrites
+Report/*.mw
+
+# newpax
+Report/*.newpax
+
+# nomencl
+Report/*.nlg
+Report/*.nlo
+Report/*.nls
+
+# pax
+Report/*.pax
+
+# pdfpcnotes
+Report/*.pdfpc
+
+# sagetex
+Report/*.sagetex.sage
+Report/*.sagetex.py
+Report/*.sagetex.scmd
+
+# scrwfile
+Report/*.wrt
+
+# svg
+svg-inkscape/
+
+# sympy
+Report/*.sout
+Report/*.sympy
+Report/sympy-plots-for-*.tex/
+
+# pdfcomment
+Report/*.upa
+Report/*.upb
+
+# pythontex
+Report/*.pytxcode
+pythontex-files-*/
+
+# tcolorbox
+Report/*.listing
+
+# thmtools
+Report/*.loe
+
+# TikZ & PGF
+Report/*.dpth
+Report/*.md5
+Report/*.auxlock
+
+# titletoc
+Report/*.ptc
+
+# todonotes
+Report/*.tdo
+
+# vhistory
+Report/*.hst
+Report/*.ver
+
+# easy-todo
+Report/*.lod
+
+# xcolor
+Report/*.xcp
+
+# xmpincl
+Report/*.xmpi
+
+# xindy
+Report/*.xdy
+
+# xypic precompiled matrices and outlines
+Report/*.xyc
+Report/*.xyd
+
+# endfloat
+Report/*.ttt
+Report/*.fff
+
+# Latexian
+TSWLatexianTemp*
+
+## Editors:
+# WinEdt
+Report/*.bak
+Report/*.sav
+
+# Texpad
+.texpadtmp
+
+# LyX
+Report/*.lyx~
+
+# Kile
+Report/*.backup
+
+# gummi
+.Report/*.swp
+
+# KBibTeX
+*~[0-9]*
+
+# TeXnicCenter
+Report/*.tps
+
+# auto folder when using emacs and auctex
+./auto/*
+Report/*.el
+
+# expex forward references with \gathertags
+*-tags.tex
+
+# standalone packages
+Report/*.sta
+
+# Makeindex log files
+Report/*.lpz
+
+# xwatermark package
+Report/*.xwm
+
+# REVTeX puts footnotes in the bibliography by default, unless the nofootinbib
+# option is specified. Footnotes are the stored in a file with suffix Notes.bib.
+# Uncomment the next line to have this generated file ignored.
+#*Notes.bib
+
+### LaTeX Patch ###
+# LIPIcs / OASIcs
+Report/*.vtc
+
+# glossaries
+Report/*.glstex
