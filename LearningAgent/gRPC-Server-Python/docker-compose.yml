@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  rcssserver:
+    image: sadraiiali/rcssserver:latest
+    container_name: rcssserver
+    networks:
+      custom_network:
+        ipv4_address: 10.0.10.10
+
+
+  right_team: 
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - TEAM_NAME=right_team
+      - HOST=10.0.10.10
+    container_name: right_team_all
+    networks:
+      custom_network:
+        ipv4_address: 10.0.10.2
+
+  left_team: 
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - TEAM_NAME=left_team
+      - HOST=10.0.10.10
+    container_name: left_team_all
+    networks:
+      custom_network:
+        ipv4_address: 10.0.10.3
+
+
+
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.0.10.0/24
