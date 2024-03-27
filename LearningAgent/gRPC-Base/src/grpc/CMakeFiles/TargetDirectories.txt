@@ -1,0 +1,3 @@
+/home/arad/SS2D-gRPC-Base/src/grpc/CMakeFiles/service_grpc_proto.dir
+/home/arad/SS2D-gRPC-Base/src/grpc/CMakeFiles/edit_cache.dir
+/home/arad/SS2D-gRPC-Base/src/grpc/CMakeFiles/rebuild_cache.dir
