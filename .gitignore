@@ -352,3 +352,9 @@ grpc/python-v1/src/__pycache__/
 cmake-build-debug-event-trace/
 __pycache__/
 grpc/python-v1/src/__pycache__/
+######################################
+## For gRPC server:
+
+__pycache__
+venv/
+*.pyc
