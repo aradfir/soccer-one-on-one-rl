@@ -161,7 +161,8 @@ class ContinuousPenaltyEnv(gym.Env):
         goalie_pos = V2D(goalie.position.x,goalie.position.y)
         goal_post_up = V2D(hl,self.server_param.goal_width/2)
         goal_post_down = V2D(hl,-self.server_param.goal_width/2)
-        shoot_tri = Triangle2D(ball_pos,goal_post_up,goal_post_down)
+        ball_pos_V2D = V2D(ball_pos.x,ball_pos.y)
+        shoot_tri = Triangle2D(ball_pos_V2D,goal_post_up,goal_post_down)
         if not shoot_tri.contains(back_goalie_pos) and not shoot_tri.contains(goalie_pos):
             dribbled_goalie_reward = self.AFTER_GOALIE_REWARD
         previous_cycle_shoot = 0
@@ -273,5 +274,5 @@ class ContinuousPenaltyEnv(gym.Env):
         if self.trainer_action_queue.empty:
             self.trainer_action_queue.put(seed)
         # reset action sent, to unblock player action
-        self.do_action([-1,-1], clear_actions=True)
+        self.do_action(-1, clear_actions=True)
         return self.wait_for_observation_and_return()

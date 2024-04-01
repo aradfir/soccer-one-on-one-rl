@@ -6,6 +6,7 @@ from concurrent import futures
 import grpc
 from gym_envs.continuous_env import ContinuousPenaltyEnv
 from stable_baselines3.common.logger import configure
+from gym_envs.discrete_env import DiscretePenaltyEnv
 import service_pb2_grpc as pb2_grpc
 import service_pb2 as pb2
 from stable_baselines3.common.env_checker import check_env
@@ -92,7 +93,7 @@ class GymGame(Game):
             return actions
         # if the ball is kickable, send observation to the gym env
         action = self.send_state_get_action(request)
-        if action[0] == -1:
+        if action == -1:
             self.log("***** GOT RESET")
             # is from reset
             return actions
@@ -132,20 +133,20 @@ def serve(gym_env:ContinuousPenaltyEnv):
         server.stop(0)
 
 if __name__ == "__main__":
-    gym_env = ContinuousPenaltyEnv(verbose=DEBUG_GYM)
+    gym_env = DiscretePenaltyEnv(verbose=DEBUG_GYM)
     server_thread = threading.Thread(target=serve, args=(gym_env,))
     server_thread.start()
     print("Await trainer")
     trainer_started.wait()
     # gym_env.reset()
-    checkpoint_callback = CheckpointCallback(5_000,"models/DDPG","TEST",False,False,2)
+    checkpoint_callback = CheckpointCallback(5_000,"models/DQN","DQN",False,False,2)
     # log_callback = DDPGCallback()
     # callback_list = CallbackList([checkpoint_callback,log_callback])
-    logger = configure("logs/DDPG_tensorboard_1/",["stdout","tensorboard","csv"])
-    model = DDPG('MlpPolicy', gym_env,tensorboard_log="./logs/DDPG_tensorboard/",)
+    logger = configure("logs/DQN_tensorboard/",["stdout","tensorboard","csv"])
+    model = DQN('MlpPolicy', gym_env,tensorboard_log="./logs/DQN_tensorboard/",)
     model.set_logger(logger)
     model = model.learn(1_000_000, progress_bar=True,callback=checkpoint_callback)
-    model.save("DDPG_model_1M")
+    model.save("DQN_model_1M")
     print("Model trained")
     print("?????????????????????????????????????????????????????????????????????????")
     observation, _ = gym_env.reset()
