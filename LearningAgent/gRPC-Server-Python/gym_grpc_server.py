@@ -4,7 +4,7 @@ import threading
 from multiprocessing import Process,Queue
 from concurrent import futures
 import grpc
-from gym_env import CustomGymEnv
+from gym_envs.continuous_env import ContinuousPenaltyEnv
 from stable_baselines3.common.logger import configure
 import service_pb2_grpc as pb2_grpc
 import service_pb2 as pb2
@@ -19,11 +19,11 @@ DEBUG_GYM = False
 # flag to check if setup is done
 trainer_started = threading.Event()
 class GymGame(Game):
-    def __init__(self, gym_env:CustomGymEnv):
+    def __init__(self, gym_env:ContinuousPenaltyEnv):
         super().__init__()
         self.opp_goalie_start = False
         self.was_set_play_before = False
-        self.gym_env: CustomGymEnv = gym_env
+        self.gym_env: ContinuousPenaltyEnv = gym_env
     
     def SendServerParams(self, request: pb2.ServerParam, context):
         self.gym_env.server_param = request
@@ -118,7 +118,7 @@ class GymGame(Game):
         action = self.gym_env.player_action_queue.get(block = True)
         return action
 
-def serve(gym_env:CustomGymEnv):
+def serve(gym_env:ContinuousPenaltyEnv):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=22))
     pb2_grpc.add_GameServicer_to_server(GymGame(gym_env), server)
     server.add_insecure_port('localhost:50051')
@@ -132,7 +132,7 @@ def serve(gym_env:CustomGymEnv):
         server.stop(0)
 
 if __name__ == "__main__":
-    gym_env = CustomGymEnv(verbose=DEBUG_GYM)
+    gym_env = ContinuousPenaltyEnv(verbose=DEBUG_GYM)
     server_thread = threading.Thread(target=serve, args=(gym_env,))
     server_thread.start()
     print("Await trainer")
