@@ -6,19 +6,19 @@ import service_pb2 as pb2
 from service_pb2 import Body_KickOneStep
 from pyrusgeom.vector_2d import Vector2D as V2D
 from pyrusgeom.triangle_2d import Triangle2D
-class CustomGymEnv(gym.Env):
+class ContinuousPenaltyEnv(gym.Env):
     def __init__(self, verbose = False) -> None:
         super().__init__()
         ### CONFIGURATION ###
-        self.ANGLE_DIVS = 12
+        
         # self.RELATIVE_KICK_ANGLES= [0,15,-15,30,-30,60,-60,90,-90,135,-135,180]
-        self.POSSIBLE_KICK_VELS = [.1,.2,.3,.4,.5,.6,.7,.8] # relative to ball speed max
+        
         self.OOB_REWARD = -300
         self.GOAL_REWARD = 1500
         self.GOALIE_CATCH_REWARD = -200
         self.TIMEOUT_REWARD = -150
         self.STEP_REWARD = -5
-        self.AFTER_GOALIE_REWARD = 50
+        self.AFTER_GOALIE_REWARD = 5
         self.TIMEOUT_CYCLES = 150 # as set for penalty mode
         self.TERMINAL_STATES = [GameModeType.AfterGoal_, GameModeType.FreeKick_, GameModeType.CornerKick_, GameModeType.GoalieCatch_, GameModeType.KickIn_,GameModeType.KickOff_, GameModeType.GoalKick_, GameModeType.PenaltyMiss_, GameModeType.PenaltyScore_, GameModeType.PenaltyReady_, GameModeType.PenaltySetup_]
         self.PLAY_STATES = [GameModeType.PlayOn, GameModeType.PenaltyTaken_]
@@ -31,7 +31,7 @@ class CustomGymEnv(gym.Env):
         self.server_param: ServerParam = None
         self.player_param: PlayerParam = None
         self.player_type: PlayerType = None
-        self.ANGLE_STEP = 360/self.ANGLE_DIVS
+        
         self.verbose = verbose
         self.episode_start_cycle = 999
         
@@ -157,11 +157,12 @@ class CustomGymEnv(gym.Env):
         dist_to_goalie_factor = goalie.dist_from_ball - old_goalie.dist_from_ball
         dribbled_goalie_reward = 0
         maximum_catchable_x = goalie.position.x + self.server_param.catchable_area
-        goalie_pos = V2D(min(maximum_catchable_x,hl),goalie.position.y)
+        back_goalie_pos = V2D(min(maximum_catchable_x,hl),goalie.position.y)
+        goalie_pos = V2D(goalie.position.x,goalie.position.y)
         goal_post_up = V2D(hl,self.server_param.goal_width/2)
         goal_post_down = V2D(hl,-self.server_param.goal_width/2)
-        goalie_tri = Triangle2D(goalie_pos,goal_post_up,goal_post_down)
-        if goalie_tri.contains(V2D(ball_pos.x,ball_pos.y)):
+        shoot_tri = Triangle2D(ball_pos,goal_post_up,goal_post_down)
+        if not shoot_tri.contains(back_goalie_pos) and not shoot_tri.contains(goalie_pos):
             dribbled_goalie_reward = self.AFTER_GOALIE_REWARD
         previous_cycle_shoot = 0
         
