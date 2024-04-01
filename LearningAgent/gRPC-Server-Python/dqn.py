@@ -77,7 +77,6 @@ class DQN(nn.Module):
                 total_rewards = 0
 
             if len(self.replay_buffer) >= self.batch_size and step % self.update_freq == 0:
-                print(f"Optimizing at {step} steps done.")
                 self.optimize_model()
 
             if step % self.target_update_freq == 0:
@@ -87,7 +86,7 @@ class DQN(nn.Module):
                 mean_reward = np.mean(episode_rewards)
                 self.writer.add_scalar('Mean Episodic Reward', mean_reward, step)
                 episode_rewards = []
-            # self.print_progress_bar(step,steps,f"{step}/{steps} steps done.")
+            self.print_progress_bar(step,steps,f"{step}/{steps} steps done.")
 
         self.writer.flush()
 
