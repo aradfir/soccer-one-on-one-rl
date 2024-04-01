@@ -83,11 +83,11 @@ class DQN(nn.Module):
             if step % self.target_update_freq == 0:
                 self.target_network.load_state_dict(self.network.state_dict())
 
-            if (step + 1) % 100 == 0:
+            if (step + 1) % 100 == 0 and len(episode_rewards) > 0:
                 mean_reward = np.mean(episode_rewards)
                 self.writer.add_scalar('Mean Episodic Reward', mean_reward, step)
                 episode_rewards = []
-            self.print_progress_bar(step,steps,f"{step}/{steps} steps done.")
+            # self.print_progress_bar(step,steps,f"{step}/{steps} steps done.")
 
         self.writer.flush()
 
