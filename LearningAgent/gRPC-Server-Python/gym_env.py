@@ -5,6 +5,7 @@ from service_pb2 import GameModeType, ServerParam, PlayerType, PlayerParam, Side
 import service_pb2 as pb2
 from service_pb2 import Body_KickOneStep
 from pyrusgeom.vector_2d import Vector2D as V2D
+from pyrusgeom.triangle_2d import Triangle2D
 class CustomGymEnv(gym.Env):
     def __init__(self, verbose = False) -> None:
         super().__init__()
@@ -16,10 +17,11 @@ class CustomGymEnv(gym.Env):
         self.GOAL_REWARD = 1500
         self.GOALIE_CATCH_REWARD = -200
         self.TIMEOUT_REWARD = -150
-        self.STEP_REWARD = -10
-        self.TIMEUT_CYCLES = 150 # as set for penalty mode
-        self.TERMINAL_STATES = [GameModeType.AfterGoal_, GameModeType.FreeKick_, GameModeType.CornerKick_, GameModeType.GoalieCatch_, GameModeType.KickIn_,GameModeType.KickOff_, GameModeType.GoalKick_]
-        self.PLAY_STATES = [GameModeType.PlayOn]
+        self.STEP_REWARD = -5
+        self.AFTER_GOALIE_REWARD = 50
+        self.TIMEOUT_CYCLES = 150 # as set for penalty mode
+        self.TERMINAL_STATES = [GameModeType.AfterGoal_, GameModeType.FreeKick_, GameModeType.CornerKick_, GameModeType.GoalieCatch_, GameModeType.KickIn_,GameModeType.KickOff_, GameModeType.GoalKick_, GameModeType.PenaltyMiss_, GameModeType.PenaltyScore_, GameModeType.PenaltyReady_, GameModeType.PenaltySetup_]
+        self.PLAY_STATES = [GameModeType.PlayOn, GameModeType.PenaltyTaken_]
         #######################
         self.player_action_queue = Queue(1)
         self.trainer_action_queue = Queue(10)
@@ -44,7 +46,7 @@ class CustomGymEnv(gym.Env):
 
 
     def is_timed_out(self, current_cycle):
-        return current_cycle - self.episode_start_cycle >= self.TIMEUT_CYCLES
+        return current_cycle - self.episode_start_cycle >= self.TIMEOUT_CYCLES
     
     
     def get_their_goalie(self, observation: State) -> pb2.Player:
@@ -65,8 +67,9 @@ class CustomGymEnv(gym.Env):
     def get_goalie_pos(self, observation: State) -> Vector2D:
         goalie = self.get_their_goalie(observation)
         if not goalie:
-            return Vector2D(x=-999., y= -999.)
+            return None
         return goalie.position
+    
 
 
 
@@ -81,20 +84,14 @@ class CustomGymEnv(gym.Env):
         self_angle = (V2D(x=52.5,y=0) - V2D(x=self_pos.x,y=self_pos.y)).th()
         normalized_self_pos = [self.dist_to_goal(self_pos)/120, self_angle.degree_()/90]
         normalized_ball_pos = [ball_pos.x/hl, ball_pos.y/hw]
-        
-        if abs(opp_pos.x) <= hl:
-            opp = self.get_their_goalie(observation)
-            normalized_opp_pos = [opp_pos.x/hl, opp_pos.y/hw]
-            relative_angle = [(opp.angle_from_ball - opp.body_direction)/180]
-            goalie_dist = opp.dist_from_self/100
-            goalie_angle = opp.angle_from_self/180
-            relative_goalie_pos = [goalie_dist,goalie_angle]
-        else:
-            # cant see opp
-            normalized_opp_pos = [1, 0]
-            relative_angle = [0]
-
-
+        if opp_pos is None:
+            opp_pos = Vector2D(52.5,0)
+        opp = self.get_their_goalie(observation)
+        normalized_opp_pos = [opp_pos.x/hl, opp_pos.y/hw]
+        relative_angle = [(opp.angle_from_ball - opp.body_direction)/180]
+        goalie_dist = opp.dist_from_self/100
+        goalie_angle = opp.angle_from_self/180
+        relative_goalie_pos = [goalie_dist,goalie_angle]
         if self.verbose:
             print(f"Self Pos: {normalized_self_pos}, Ball Pos: {normalized_ball_pos}, Opp Pos: {normalized_opp_pos}, Relative Opp angle: { relative_angle}")
         return np.array(normalized_self_pos + normalized_ball_pos + normalized_opp_pos+relative_angle+relative_goalie_pos)
@@ -115,38 +112,65 @@ class CustomGymEnv(gym.Env):
 
         hl = self.server_param.pitch_half_length
         hw = self.server_param.pitch_half_width
-        if gamemode == GameModeType.KickIn_ or gamemode == GameModeType.CornerKick_ or gamemode == GameModeType.GoalKick_ or abs(ball_pos.y) >= hw:
-            return self.OOB_REWARD
-        if gamemode == GameModeType.FreeKick_ or gamemode == GameModeType.GoalieCatch_:
-            return self.GOALIE_CATCH_REWARD
-        if ball_pos.x >= hl:
-            if abs(ball_pos.y) < self.server_param.goal_width/2:
-                # ITS A GOAL :D
+        if gamemode == GameModeType.PenaltyScore_:
+            return self.GOAL_REWARD
+        if gamemode == GameModeType.PenaltyMiss_:
+            if ball_pos.x >= hl and abs(ball_pos.y) < self.server_param.goal_width /2:
                 return self.GOAL_REWARD
-            else:
-                # out of bounds (side of goal)
+            if abs(ball_pos.x) > hl or abs(ball_pos.y) > hw:
                 return self.OOB_REWARD
+            goalie = self.get_their_goalie(observation)
+            if goalie is not None:
+                if goalie.dist_from_ball < self.player_type.max_catchable_dist:
+                    return self.GOALIE_CATCH_REWARD
+            return self.TIMEOUT_REWARD
+        
+            
+        # if gamemode == GameModeType.KickIn_ or gamemode == GameModeType.CornerKick_ or gamemode == GameModeType.GoalKick_ or abs(ball_pos.y) >= hw:
+        #     return self.OOB_REWARD
+        # if gamemode == GameModeType.FreeKick_ or gamemode == GameModeType.GoalieCatch_:
+        #     return self.GOALIE_CATCH_REWARD
+        # if ball_pos.x >= hl:
+        #     if abs(ball_pos.y) < self.server_param.goal_width/2:
+        #         # ITS A GOAL :D
+        #         return self.GOAL_REWARD
+        #     else:
+        #         # out of bounds (side of goal)
+        #         return self.OOB_REWARD
     
         
         if self.is_timed_out(wm.cycle):
             return self.TIMEOUT_REWARD
-        
+        # print(f"Catchable area:{self.player_type.max_catchable_dist}")
         goalie = self.get_their_goalie(observation)
+        # if goalie is not None:
+        #     if goalie.dist_from_ball < self.player_type.max_catchable_dist:
+        #         return self.GOALIE_CATCH_REWARD
         
         old_goalie = self.get_their_goalie(old_observation)
         old_ball_pos = old_observation.world_model.ball.position
         # close to goal is good
         dist_to_goal_factor = -self.dist_to_goal(ball_pos) + self.dist_to_goal(old_ball_pos)
+        # x advance is good
+        x_factor = ball_pos.x - old_ball_pos.x
         # close to goalie is risky
         dist_to_goalie_factor = goalie.dist_from_ball - old_goalie.dist_from_ball
-        
+        dribbled_goalie_reward = 0
+        maximum_catchable_x = goalie.position.x + self.server_param.catchable_area
+        goalie_pos = V2D(min(maximum_catchable_x,hl),goalie.position.y)
+        goal_post_up = V2D(hl,self.server_param.goal_width/2)
+        goal_post_down = V2D(hl,-self.server_param.goal_width/2)
+        goalie_tri = Triangle2D(goalie_pos,goal_post_up,goal_post_down)
+        if goalie_tri.contains(V2D(ball_pos.x,ball_pos.y)):
+            dribbled_goalie_reward = self.AFTER_GOALIE_REWARD
         previous_cycle_shoot = 0
+        
         # if action[2] == 1:
         #     # we shot before but didnt do anything
         #     previous_cycle_shoot = -5
         
         # print(f'Ball Pos:({ball_pos.x},{ball_pos.y}), old ball pos : ({old_ball_pos.x},{old_ball_pos.y})')
-        return self.STEP_REWARD + 2.5*dist_to_goal_factor + 0.5* dist_to_goalie_factor + previous_cycle_shoot
+        return self.STEP_REWARD + dribbled_goalie_reward + 2*x_factor + 1*dist_to_goal_factor + 0.5* dist_to_goalie_factor + previous_cycle_shoot
     
 
     def dist_to_goal_square(self, pos:Vector2D):
@@ -201,6 +225,7 @@ class CustomGymEnv(gym.Env):
         observation:State = self.observation_queue.get()
         wm = observation.world_model
         game_mode = wm.game_mode_type
+
         reward = 0
         if self.old_observation is not None:
             reward = self.calculate_reward(self.old_observation, action, observation)
@@ -228,7 +253,7 @@ class CustomGymEnv(gym.Env):
         pen_point = Vector2D(x =-1 *( self.server_param.pitch_half_length/2 - self.server_param.pen_dist_x), y=0)
         goal_vec = Vector2D(x=50,y=0)
         player_vec = Vector2D(x=pen_point.x - 2,y=0.)
-        actions.actions.append(TrainerAction(do_change_mode=pb2.DoChangeMode(game_mode_type=GameModeType.PlayOn,side=Side.LEFT)))
+        actions.actions.append(TrainerAction(do_change_mode=pb2.DoChangeMode(game_mode_type=GameModeType.PenaltyTaken_,side=Side.LEFT)))
         actions.actions.append(TrainerAction(do_move_ball=pb2.DoMoveBall(position=pen_point,velocity=zero_vec)))
         actions.actions.append(TrainerAction(do_recover=pb2.DoRecover()))
         actions.actions.append(TrainerAction(do_move_player=pb2.DoMovePlayer(our_side=True, uniform_number= 1, position= player_vec, body_direction=0)))

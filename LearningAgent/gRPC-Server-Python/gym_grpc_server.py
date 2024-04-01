@@ -1,13 +1,17 @@
 import time
 from grpc_server import Game
 import threading
+from multiprocessing import Process,Queue
 from concurrent import futures
 import grpc
 from gym_env import CustomGymEnv
+from stable_baselines3.common.logger import configure
 import service_pb2_grpc as pb2_grpc
 import service_pb2 as pb2
 from stable_baselines3.common.env_checker import check_env
-from stable_baselines3 import PPO,A2C,TD3,DDPG
+from stable_baselines3 import PPO,A2C,TD3,DDPG,DQN
+
+from stable_baselines3.common.callbacks import CheckpointCallback,CallbackList
 from queue import Empty, Full
 
 DEBUG_GRPC = False
@@ -134,8 +138,13 @@ if __name__ == "__main__":
     print("Await trainer")
     trainer_started.wait()
     # gym_env.reset()
-    model = DDPG('MlpPolicy', gym_env)
-    model = model.learn(1_000_000, progress_bar=True)
+    checkpoint_callback = CheckpointCallback(5_000,"models/DDPG","TEST",False,False,2)
+    # log_callback = DDPGCallback()
+    # callback_list = CallbackList([checkpoint_callback,log_callback])
+    logger = configure("logs/DDPG_tensorboard_1/",["stdout","tensorboard","csv"])
+    model = DDPG('MlpPolicy', gym_env,tensorboard_log="./logs/DDPG_tensorboard/",)
+    model.set_logger(logger)
+    model = model.learn(1_000_000, progress_bar=True,callback=checkpoint_callback)
     model.save("DDPG_model_1M")
     print("Model trained")
     print("?????????????????????????????????????????????????????????????????????????")
