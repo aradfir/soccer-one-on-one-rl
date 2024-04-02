@@ -13,13 +13,16 @@ class ContinuousPenaltyEnv(gym.Env):
         
         # self.RELATIVE_KICK_ANGLES= [0,15,-15,30,-30,60,-60,90,-90,135,-135,180]
         
-        self.OOB_REWARD = -300
+        self.OOB_REWARD = -400
         self.GOAL_REWARD = 1500
         self.GOALIE_CATCH_REWARD = -200
         self.TIMEOUT_REWARD = -150
         self.STEP_REWARD = -5
         self.AFTER_GOALIE_REWARD = 5
         self.TIMEOUT_CYCLES = 150 # as set for penalty mode
+        self.x_factor_mult = 2
+        self.dist_to_goal_factor_mult = 1
+        self.dist_to_goalie_factor_mult = 0.5
         self.TERMINAL_STATES = [GameModeType.AfterGoal_, GameModeType.FreeKick_, GameModeType.CornerKick_, GameModeType.GoalieCatch_, GameModeType.KickIn_,GameModeType.KickOff_, GameModeType.GoalKick_, GameModeType.PenaltyMiss_, GameModeType.PenaltyScore_, GameModeType.PenaltyReady_, GameModeType.PenaltySetup_]
         self.PLAY_STATES = [GameModeType.PlayOn, GameModeType.PenaltyTaken_]
         #######################
@@ -156,15 +159,15 @@ class ContinuousPenaltyEnv(gym.Env):
         # close to goalie is risky
         dist_to_goalie_factor = goalie.dist_from_ball - old_goalie.dist_from_ball
         dribbled_goalie_reward = 0
-        maximum_catchable_x = goalie.position.x + self.server_param.catchable_area
-        back_goalie_pos = V2D(min(maximum_catchable_x,hl),goalie.position.y)
-        goalie_pos = V2D(goalie.position.x,goalie.position.y)
-        goal_post_up = V2D(hl,self.server_param.goal_width/2)
-        goal_post_down = V2D(hl,-self.server_param.goal_width/2)
-        ball_pos_V2D = V2D(ball_pos.x,ball_pos.y)
-        shoot_tri = Triangle2D(ball_pos_V2D,goal_post_up,goal_post_down)
-        if not shoot_tri.contains(back_goalie_pos) and not shoot_tri.contains(goalie_pos):
-            dribbled_goalie_reward = self.AFTER_GOALIE_REWARD
+        # maximum_catchable_x = goalie.position.x + self.server_param.catchable_area
+        # back_goalie_pos = V2D(min(maximum_catchable_x,hl),goalie.position.y)
+        # goalie_pos = V2D(goalie.position.x,goalie.position.y)
+        # goal_post_up = V2D(hl,self.server_param.goal_width/2)
+        # goal_post_down = V2D(hl,-self.server_param.goal_width/2)
+        # ball_pos_V2D = V2D(ball_pos.x,ball_pos.y)
+        # shoot_tri = Triangle2D(ball_pos_V2D,goal_post_up,goal_post_down)
+        # if not shoot_tri.contains(back_goalie_pos) and not shoot_tri.contains(goalie_pos):
+        #     dribbled_goalie_reward = self.AFTER_GOALIE_REWARD
         previous_cycle_shoot = 0
         
         # if action[2] == 1:
@@ -172,7 +175,7 @@ class ContinuousPenaltyEnv(gym.Env):
         #     previous_cycle_shoot = -5
         
         # print(f'Ball Pos:({ball_pos.x},{ball_pos.y}), old ball pos : ({old_ball_pos.x},{old_ball_pos.y})')
-        return self.STEP_REWARD + dribbled_goalie_reward + 2*x_factor + 1*dist_to_goal_factor + 0.5* dist_to_goalie_factor + previous_cycle_shoot
+        return self.STEP_REWARD + dribbled_goalie_reward + self.x_factor_mult*x_factor + self.dist_to_goal_factor_mult*dist_to_goal_factor + self.dist_to_goalie_factor_mult* dist_to_goalie_factor + previous_cycle_shoot
     
 
     def dist_to_goal_square(self, pos:Vector2D):
