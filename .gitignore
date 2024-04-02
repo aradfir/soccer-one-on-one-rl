@@ -359,3 +359,5 @@ grpc/python-v1/src/__pycache__/
 __pycache__
 venv/
 *.pyc
+LearningAgent/gRPC-Server-Python/logs/
+LearningAgent/gRPC-Server-Python/intermediate_models/
