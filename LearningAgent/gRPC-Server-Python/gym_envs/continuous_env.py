@@ -1,7 +1,7 @@
 import gymnasium as gym
 from queue import Queue
 import numpy as np
-from service_pb2 import GameModeType, ServerParam, PlayerType, PlayerParam, Side, State, TrainerAction, TrainerActions, Vector2D, WorldModel
+from service_pb2 import GameModeType, PlayerAction, ServerParam, PlayerType, PlayerParam, Side, State, TrainerAction, TrainerActions, Vector2D, WorldModel
 import service_pb2 as pb2
 from service_pb2 import Body_KickOneStep
 from pyrusgeom.vector_2d import Vector2D as V2D
@@ -220,7 +220,9 @@ class ContinuousPenaltyEnv(gym.Env):
         # angle = self.RELATIVE_KICK_ANGLES[action[0]]
         pos = wm.self.position
         target = V2D.polar2vector(10,angle)+ V2D(x=pos.x,y=pos.y)
-        return Body_KickOneStep(first_speed=power,target_point=Vector2D(x=target.x(),y=target.y()),force_mode=True)
+        kick = Body_KickOneStep(first_speed=power,target_point=Vector2D(x=target.x(),y=target.y()),force_mode=True)
+        action = PlayerAction(body_kick_one_step=kick)
+        return action
 
 
 

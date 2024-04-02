@@ -2,7 +2,7 @@ from gym_envs.continuous_env import ContinuousPenaltyEnv
 import numpy as np
 from service_pb2 import GameModeType, ServerParam, PlayerType, PlayerParam, Side, State, TrainerAction, TrainerActions, Vector2D, WorldModel
 import service_pb2 as pb2
-from service_pb2 import Body_KickOneStep
+from service_pb2 import Body_KickOneStep,PlayerAction
 import gymnasium as gym
 
 class DiscretePenaltyEnv(ContinuousPenaltyEnv):
@@ -20,5 +20,5 @@ class DiscretePenaltyEnv(ContinuousPenaltyEnv):
         kick_vel = self.POSSIBLE_KICK_VELS[action % len(self.POSSIBLE_KICK_VELS)]
         action = [normalized_angle, kick_vel]
         return super().gym_action_to_soccer_action(action, wm)
-    def calculate_reward(self, old_observation: State, action: np.ndarray, observation: State) -> float:
-        return super().calculate_reward(old_observation, action, observation)/10
+    # def calculate_reward(self, old_observation: State, action: np.ndarray, observation: State) -> float:
+    #     return super().calculate_reward(old_observation, action, observation)

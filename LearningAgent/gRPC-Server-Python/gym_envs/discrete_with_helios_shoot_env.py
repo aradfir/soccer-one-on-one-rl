@@ -13,7 +13,7 @@ class DiscreteEnvWShoot(DiscretePenaltyEnv):
     
     def gym_action_to_soccer_action(self, action, wm: WorldModel):
         if action == 0:
-            return pb2.HeliosShoot()
+            return pb2.PlayerAction(helios_shoot=pb2.HeliosShoot())
         return super().gym_action_to_soccer_action(action - 1, wm)
     
     def calculate_reward(self, old_observation: pb2.State, action: ndarray, observation: pb2.State) -> float:
