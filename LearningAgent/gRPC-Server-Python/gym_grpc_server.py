@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # log_callback = DDPGCallback()
     # callback_list = CallbackList([checkpoint_callback,log_callback])
     logger = configure("logs/DQN_tensorboard/",["stdout","tensorboard","csv"])
-    model = DQN('MlpPolicy', gym_env,tensorboard_log="./logs/DQN_tensorboard/",)
+    model = DQN('MlpPolicy', gym_env,tensorboard_log="./logs/DQN_tensorboard/", learning_starts=20000, target_update_interval=1000,)
     model.set_logger(logger)
     model = model.learn(1_000_000, progress_bar=True,callback=checkpoint_callback)
     model.save("DQN_model_1M")
