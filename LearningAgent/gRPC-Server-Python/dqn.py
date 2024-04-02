@@ -8,7 +8,7 @@ import random
 from torch.utils.tensorboard import SummaryWriter
 from gymnasium import Env
 class DQN(nn.Module):
-    def __init__(self, env: Env, hidden_size=64, lr=1e-3, gamma=0.99, epsilon=0.1, buffer_length=10000, update_freq=100, target_update_freq=500, batch_size=128):
+    def __init__(self, env: Env, hidden_size=64, lr=1e-3, gamma=0.99, epsilon_start=1, epsilon_end=0.05, epsilon_fraction=0.1, buffer_length=100_000, update_freq=100, target_update_freq=500, batch_size=128):
         super(DQN, self).__init__()
         self.env : Env = env 
         self.state_space = env.observation_space.shape[0]
@@ -16,7 +16,10 @@ class DQN(nn.Module):
         self.hidden_size = hidden_size
         self.lr = lr
         self.gamma = gamma
-        self.epsilon = epsilon
+        self.epsilon = epsilon_start
+        self.maximum_epsilon = epsilon_start
+        self.minimum_epsilon = epsilon_end
+        self.epsilon_fraction = epsilon_fraction
         self.buffer_length = buffer_length
         self.update_freq = update_freq
         self.target_update_freq = target_update_freq
@@ -59,6 +62,8 @@ class DQN(nn.Module):
         return action
 
     def learn(self, steps):
+        #calculate epsilon decay
+        per_step_epsilon_decay = (self.maximum_epsilon - self.minimum_epsilon) / (steps * self.epsilon_fraction)
         state, _ = self.env.reset()
         total_rewards = 0
         episode_rewards = []
@@ -87,6 +92,8 @@ class DQN(nn.Module):
                 self.writer.add_scalar('Mean Episodic Reward', mean_reward, step)
                 episode_rewards = []
             self.print_progress_bar(step,steps,f"{step}/{steps} steps done.")
+            # decay epsilon
+            self.epsilon = max(self.minimum_epsilon, self.epsilon - per_step_epsilon_decay)
 
         self.writer.flush()
 
