@@ -28,8 +28,8 @@ for i, file in enumerate(files):
         # get x (Step) and y (Value)
         x = [int(row["Step"]) for row in data]
         y = [float(row["Value"]) for row in data]
-        if ten_x_rewards and "reward" in file:
-            y = [v*10 for v in y]
+        if "reward" in file:
+            y = [v*reward_scale for v in y]
         # plot data
         axs[i].plot(x, y)
         axs[i].legend([file.removesuffix(".csv")])
