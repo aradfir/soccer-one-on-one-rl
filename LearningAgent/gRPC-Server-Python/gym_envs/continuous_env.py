@@ -37,7 +37,7 @@ class ContinuousPenaltyEnv(gym.Env):
         
         self.verbose = verbose
         self.episode_start_cycle = 999
-        
+        self.is_success = None
         # observation: normalized self pos (polar to goal) (r, theta), normalized ball pos(x,y), normalized goalie pos(x,y), goalie body relative to ball (theta), goalie pos relative to player(r, theta)
         self.observation_space = gym.spaces.Box(low=np.array([0,-1,-1,-1,-1,-1,-1,0,-1]),high=np.array([1,1,1,1,1,1,1,1,1])
                                                 ,shape=(9,),dtype=np.float64)
@@ -116,10 +116,13 @@ class ContinuousPenaltyEnv(gym.Env):
         hl = self.server_param.pitch_half_length
         hw = self.server_param.pitch_half_width
         if gamemode == GameModeType.PenaltyScore_:
+            self.is_success = True
             return self.GOAL_REWARD
         if gamemode == GameModeType.PenaltyMiss_:
             if ball_pos.x >= hl and abs(ball_pos.y) < self.server_param.goal_width /2:
+                self.is_success = True
                 return self.GOAL_REWARD
+            self.is_success = False
             if abs(ball_pos.x) > hl or abs(ball_pos.y) > hw:
                 return self.OOB_REWARD
             goalie = self.get_their_goalie(observation)
@@ -232,7 +235,7 @@ class ContinuousPenaltyEnv(gym.Env):
         observation:State = self.observation_queue.get()
         wm = observation.world_model
         game_mode = wm.game_mode_type
-
+        self.is_success = None
         reward = 0
         if self.old_observation is not None:
             reward = self.calculate_reward(self.old_observation, action, observation)
@@ -242,9 +245,12 @@ class ContinuousPenaltyEnv(gym.Env):
         
         terminated = game_mode in self.TERMINAL_STATES
         truncated = self.is_timed_out(wm.cycle)
+        info_dict = {}
+        if terminated or truncated:
+            info_dict["is_success"] = self.is_success
         self.print_debug(wm, reward, terminated, truncated)
         self.old_observation = observation
-        return self.observation_to_ndarray(observation), reward, terminated, truncated, {}
+        return self.observation_to_ndarray(observation), reward, terminated, truncated, info_dict
 
     def print_debug(self, wm, reward, terminated, truncated):
         if self.verbose:
