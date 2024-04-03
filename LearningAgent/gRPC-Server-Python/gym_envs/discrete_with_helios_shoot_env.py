@@ -9,7 +9,9 @@ from service_pb2 import WorldModel
 class DiscreteEnvWShoot(DiscretePenaltyEnv):
     def __init__(self, verbose=False):
         super().__init__(verbose)
+        self.POSSIBLE_KICK_VELS = [.15, .25,.4,.5]
         self.action_space = gym.spaces.Discrete(self.ANGLE_DIVS * len(self.POSSIBLE_KICK_VELS) + 1)
+
     
     def gym_action_to_soccer_action(self, action, wm: WorldModel):
         if action == 0:
@@ -19,6 +21,6 @@ class DiscreteEnvWShoot(DiscretePenaltyEnv):
     def calculate_reward(self, old_observation: pb2.State, action: ndarray, observation: pb2.State) -> float:
         shoot_reward = 0
         if action == 0:
-            shoot_reward = -10
+            shoot_reward = -1
         return super().calculate_reward(old_observation, action, observation) + shoot_reward
         
