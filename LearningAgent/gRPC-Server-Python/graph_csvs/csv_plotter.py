@@ -2,9 +2,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import csv
 import os
-reward_scale = 10
+reward_scale = 1
 #multiplot each csv of the directory. each csv has a Step header and Value Header
-directory = "./DQN"
+directory = "./DDPG"
 # get files from OS
 files = os.listdir(directory)
 # filter out non-csv files
