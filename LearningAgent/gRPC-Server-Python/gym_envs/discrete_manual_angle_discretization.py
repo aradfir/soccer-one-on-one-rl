@@ -3,7 +3,7 @@ import service_pb2 as pb2
 import gymnasium as gym
 from pyrusgeom.vector_2d import Vector2D as V2D
 
-class DribbleAndShootEnv(DiscretePenaltyEnv):
+class DribbleAndShootAngleDiscretizationEnv(DiscretePenaltyEnv):
     def __init__(self, verbose=False):
         super().__init__(verbose)
         self.dist_to_goalie_factor_mult = 0
