@@ -8,6 +8,8 @@ from gym_envs.continuous_env import ContinuousPenaltyEnv
 from stable_baselines3.common.logger import configure
 from gym_envs.discrete_env import DiscretePenaltyEnv
 from gym_envs.discrete_with_helios_shoot_env import DiscreteEnvWShoot
+from gym_envs.discrete_with_shoot_action import DribbleAndShootEnv
+from gym_envs.discrete_manual_angle_discretization import DribbleAndShootAngleDiscretizationEnv
 import service_pb2_grpc as pb2_grpc
 import service_pb2 as pb2
 from stable_baselines3.common.env_checker import check_env
@@ -134,20 +136,20 @@ def serve(gym_env:ContinuousPenaltyEnv):
         server.stop(0)
 
 if __name__ == "__main__":
-    gym_env = DiscreteEnvWShoot(verbose=DEBUG_GYM)
+    gym_env = DribbleAndShootAngleDiscretizationEnv(verbose=DEBUG_GYM)
     server_thread = threading.Thread(target=serve, args=(gym_env,))
     server_thread.start()
     print("Await trainer")
     trainer_started.wait()
     # gym_env.reset()
-    checkpoint_callback = CheckpointCallback(5_000,"intermediate_models/DQN_Helios_shoot","DQN",False,False,2)
+    checkpoint_callback = CheckpointCallback(5_000,"intermediate_models/DQN_discretization","DQN",False,False,2)
     # log_callback = DDPGCallback()
     # callback_list = CallbackList([checkpoint_callback,log_callback])
-    logger = configure("logs/DQN_hel_shoot_tensorboard/",["stdout","tensorboard","csv"])
-    model = DQN('MlpPolicy', gym_env,tensorboard_log="./logs/DQN_hel_shoot_tensorboard/", learning_starts=20000, target_update_interval=1000,)
+    logger = configure("logs/DQN_discretization_tensorboard/",["stdout","tensorboard","csv"])
+    model = DQN('MlpPolicy', gym_env,tensorboard_log="./logs/DQN_discretization_tensorboard/" ,batch_size=512,max_grad_norm=20, gradient_steps=2)
     model.set_logger(logger)
-    model = model.learn(1_000_000, progress_bar=True,callback=checkpoint_callback)
-    model.save("final_models/DQN_helios_shoot_model_1M")
+    model = model.learn(2_000_000, progress_bar=True,callback=checkpoint_callback)
+    model.save("final_models/DQN_discretization_2M")
     print("Model trained")
     print("?????????????????????????????????????????????????????????????????????????")
     observation, _ = gym_env.reset()
