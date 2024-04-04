@@ -20,5 +20,6 @@ class DiscretePenaltyEnv(ContinuousPenaltyEnv):
         kick_vel = self.POSSIBLE_KICK_VELS[action % len(self.POSSIBLE_KICK_VELS)]
         action = [normalized_angle, kick_vel]
         return super().gym_action_to_soccer_action(action, wm)
-    # def calculate_reward(self, old_observation: State, action: np.ndarray, observation: State) -> float:
-    #     return super().calculate_reward(old_observation, action, observation)
+    
+    def calculate_reward(self, old_observation: State, action: np.ndarray, observation: State) -> float:
+        return super().calculate_reward(old_observation, action, observation)/3
