@@ -1,3 +1,4 @@
+from enum import Enum
 import gymnasium as gym
 from queue import Queue
 import numpy as np
@@ -6,6 +7,14 @@ import service_pb2 as pb2
 from service_pb2 import Body_KickOneStep
 from pyrusgeom.vector_2d import Vector2D as V2D
 from pyrusgeom.triangle_2d import Triangle2D
+# create enum for final outcomes 
+class TerminalStates(Enum):
+    OOB = 1
+    GOALIE_CATCH = 2
+    GOAL = 3
+    TIMEOUT = 4
+    NOT_TERMINAL = 5
+
 class ContinuousPenaltyEnv(gym.Env):
     def __init__(self, verbose = False) -> None:
         super().__init__()
@@ -34,7 +43,7 @@ class ContinuousPenaltyEnv(gym.Env):
         self.server_param: ServerParam = None
         self.player_param: PlayerParam = None
         self.player_type: PlayerType = None
-        
+        self.terminal_state: TerminalStates = TerminalStates.NOT_TERMINAL
         self.verbose = verbose
         self.episode_start_cycle = 999
         self.is_success = None
@@ -99,6 +108,32 @@ class ContinuousPenaltyEnv(gym.Env):
             print(f"Self Pos: {normalized_self_pos}, Ball Pos: {normalized_ball_pos}, Opp Pos: {normalized_opp_pos}, Relative Opp angle: { relative_angle}")
         return np.array(normalized_self_pos + normalized_ball_pos + normalized_opp_pos+relative_angle+relative_goalie_pos)
     
+
+    def calculate_terminal_reward(self, observation:State, ball_pos:Vector2D) -> float:
+        hl = self.server_param.pitch_half_length
+        hw = self.server_param.pitch_half_width
+        gamemode = observation.world_model.game_mode_type
+        if gamemode == GameModeType.PenaltyScore_:
+            self.is_success = True
+            self.terminal_state = TerminalStates.GOAL
+            return self.GOAL_REWARD
+        if ball_pos.x >= hl and abs(ball_pos.y) < self.server_param.goal_width /2:
+            self.is_success = True
+            self.terminal_state = TerminalStates.GOAL
+            return self.GOAL_REWARD
+        self.is_success = False
+        if abs(ball_pos.x) > hl or abs(ball_pos.y) > hw:
+            self.terminal_state = TerminalStates.OOB
+            return self.OOB_REWARD
+        goalie = self.get_their_goalie(observation)
+        if goalie is not None:
+            if goalie.dist_from_ball < self.player_type.max_catchable_dist:
+                self.terminal_state = TerminalStates.GOALIE_CATCH
+                return self.GOALIE_CATCH_REWARD
+        self.terminal_state = TerminalStates.TIMEOUT
+        return self.TIMEOUT_REWARD
+    
+
     def calculate_reward(self, old_observation:State, action:np.ndarray, observation:State) -> float:
         wm = observation.world_model
         gamemode = wm.game_mode_type
@@ -113,23 +148,10 @@ class ContinuousPenaltyEnv(gym.Env):
         else:
             ball_pos = wm.ball.position
 
-        hl = self.server_param.pitch_half_length
-        hw = self.server_param.pitch_half_width
-        if gamemode == GameModeType.PenaltyScore_:
-            self.is_success = True
-            return self.GOAL_REWARD
-        if gamemode == GameModeType.PenaltyMiss_:
-            if ball_pos.x >= hl and abs(ball_pos.y) < self.server_param.goal_width /2:
-                self.is_success = True
-                return self.GOAL_REWARD
-            self.is_success = False
-            if abs(ball_pos.x) > hl or abs(ball_pos.y) > hw:
-                return self.OOB_REWARD
-            goalie = self.get_their_goalie(observation)
-            if goalie is not None:
-                if goalie.dist_from_ball < self.player_type.max_catchable_dist:
-                    return self.GOALIE_CATCH_REWARD
-            return self.TIMEOUT_REWARD
+
+        if gamemode in self.TERMINAL_STATES:
+            return self.calculate_terminal_reward(observation, ball_pos)
+        self.terminal_state = TerminalStates.NOT_TERMINAL
         
             
         # if gamemode == GameModeType.KickIn_ or gamemode == GameModeType.CornerKick_ or gamemode == GameModeType.GoalKick_ or abs(ball_pos.y) >= hw:
@@ -248,6 +270,7 @@ class ContinuousPenaltyEnv(gym.Env):
         info_dict = {}
         if terminated or truncated:
             info_dict["is_success"] = self.is_success
+            info_dict["terminal_state"] = self.terminal_state
         self.print_debug(wm, reward, terminated, truncated)
         self.old_observation = observation
         return self.observation_to_ndarray(observation), reward, terminated, truncated, info_dict
