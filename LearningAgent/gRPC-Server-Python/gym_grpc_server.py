@@ -1,4 +1,6 @@
 import time
+
+import numpy as np
 from grpc_server import Game
 import threading
 from multiprocessing import Process,Queue
@@ -21,13 +23,14 @@ from queue import Empty, Full
 DEBUG_GRPC = False
 DEBUG_GYM = False
 # flag to check if setup is done
-trainer_started = threading.Event()
+
 class GymGame(Game):
-    def __init__(self, gym_env:ContinuousPenaltyEnv):
+    def __init__(self, gym_env:ContinuousPenaltyEnv, trainer_start_event:threading.Event ):
         super().__init__()
         self.opp_goalie_start = False
         self.was_set_play_before = False
         self.gym_env: ContinuousPenaltyEnv = gym_env
+        self.trainer_started = trainer_start_event
     
     def SendServerParams(self, request: pb2.ServerParam, context):
         self.gym_env.server_param = request
@@ -57,11 +60,11 @@ class GymGame(Game):
         return False
     
     def GetTrainerActions(self, request: pb2.State, context):
-        global trainer_started
+        
         if not self.wait_for_opponents(request.world_model):
             return pb2.TrainerActions()
         
-        trainer_started.set()
+        self.trainer_started.set()
         try:
             self.gym_env.trainer_action_queue.get(block=False)
             cycle = request.world_model.cycle
@@ -96,7 +99,8 @@ class GymGame(Game):
             return actions
         # if the ball is kickable, send observation to the gym env
         action = self.send_state_get_action(request)
-        if action == -1:
+        print(f"Action: {action}, type action: {type(action)}")
+        if not isinstance(action,np.ndarray) and  action == -1:
             self.log("***** GOT RESET")
             # is from reset
             return actions
@@ -122,9 +126,9 @@ class GymGame(Game):
         action = self.gym_env.player_action_queue.get(block = True)
         return action
 
-def serve(gym_env:ContinuousPenaltyEnv):
+def serve(gym_env:ContinuousPenaltyEnv,trainer_started:threading.Event):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=22))
-    pb2_grpc.add_GameServicer_to_server(GymGame(gym_env), server)
+    pb2_grpc.add_GameServicer_to_server(GymGame(gym_env,trainer_started), server)
     server.add_insecure_port('localhost:50051')
     server.start()
     print("Decision Server started. Listening on port 50051...")
@@ -137,9 +141,11 @@ def serve(gym_env:ContinuousPenaltyEnv):
 
 if __name__ == "__main__":
     gym_env = DribbleAndShootAngleDiscretizationEnv(verbose=DEBUG_GYM)
-    server_thread = threading.Thread(target=serve, args=(gym_env,))
+    trainer_started = threading.Event()
+    server_thread = threading.Thread(target=serve, args=(gym_env,trainer_started))
     server_thread.start()
     print("Await trainer")
+    
     trainer_started.wait()
     # gym_env.reset()
     checkpoint_callback = CheckpointCallback(5_000,"intermediate_models/DQN_discretization","DQN",False,False,2)
