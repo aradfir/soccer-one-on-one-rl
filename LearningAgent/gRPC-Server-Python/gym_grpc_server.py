@@ -17,7 +17,7 @@ import service_pb2 as pb2
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO,A2C,TD3,DDPG,DQN
 
-from stable_baselines3.common.callbacks import CheckpointCallback,CallbackList
+from stable_baselines3.common.callbacks import CheckpointCallback,CallbackList,EvalCallback
 from queue import Empty, Full
 
 DEBUG_GRPC = False
@@ -69,7 +69,7 @@ class GymGame(Game):
             self.gym_env.trainer_action_queue.get(block=False)
             cycle = request.world_model.cycle
             self.gym_env.episode_start_cycle = cycle + 1
-            print(f"Episode Start: {cycle}")
+            print(f"Episode Start: {cycle + 1}")
             return self.gym_env.get_trainer_reset_commands()
         except Empty:
             return pb2.TrainerActions()
@@ -99,7 +99,6 @@ class GymGame(Game):
             return actions
         # if the ball is kickable, send observation to the gym env
         action = self.send_state_get_action(request)
-        print(f"Action: {action}, type action: {type(action)}")
         if not isinstance(action,np.ndarray) and  action == -1:
             self.log("***** GOT RESET")
             # is from reset
@@ -140,7 +139,8 @@ def serve(gym_env:ContinuousPenaltyEnv,trainer_started:threading.Event):
         server.stop(0)
 
 if __name__ == "__main__":
-    gym_env = DribbleAndShootAngleDiscretizationEnv(verbose=DEBUG_GYM)
+    # gym_env = DribbleAndShootAngleDiscretizationEnv(verbose=DEBUG_GYM)
+    gym_env = ContinuousPenaltyEnv(verbose=DEBUG_GYM)
     trainer_started = threading.Event()
     server_thread = threading.Thread(target=serve, args=(gym_env,trainer_started))
     server_thread.start()
@@ -148,14 +148,16 @@ if __name__ == "__main__":
     
     trainer_started.wait()
     # gym_env.reset()
-    checkpoint_callback = CheckpointCallback(5_000,"intermediate_models/DQN_discretization","DQN",False,False,2)
+    checkpoint_callback = CheckpointCallback(5_000,"intermediate_models/DDPG_YuShan_Learn","DDPG",False,False,2)
+    
     # log_callback = DDPGCallback()
     # callback_list = CallbackList([checkpoint_callback,log_callback])
-    logger = configure("logs/DQN_discretization_tensorboard/",["stdout","tensorboard","csv"])
-    model = DQN('MlpPolicy', gym_env,tensorboard_log="./logs/DQN_discretization_tensorboard/" ,batch_size=512,max_grad_norm=20, gradient_steps=2)
+    # logger = configure("logs/DQN_discretization_tensorboard/",["stdout","tensorboard","csv"])
+    logger = configure("logs/DDPG_YuShanLearn_tesnorboard/",["stdout","tensorboard","csv"])
+    model = DDPG('MlpPolicy', gym_env,tensorboard_log="./logs/DDPG_YuShanLearn_tesnorboard/")
     model.set_logger(logger)
     model = model.learn(2_000_000, progress_bar=True,callback=checkpoint_callback)
-    model.save("final_models/DQN_discretization_2M")
+    model.save("final_models/DDPG_YuShan_Learn")
     print("Model trained")
     print("?????????????????????????????????????????????????????????????????????????")
     observation, _ = gym_env.reset()
