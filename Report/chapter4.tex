@@ -55,6 +55,16 @@
 این پروتکل ارتباطی، مستقل از زبان بودن آن، و نوشتن بسته‌های پیام به صورت صفر و یکی (در مقابل متنی)  است که سربار زمانی نوشتن و خواندن پیام را ناچیز می‌کند.
 همچنین به علت استفاده از پروتکل اچ‌تی‌تی‌پی \LTRfootnote{HTTP} برای ارسال بسته‌ها روی شبکه، 
 می‌توان از ضمانت‌های دریافت پیام نیز استفاده کرد.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{images/grpc_message.png}
+    \caption{نحوه تعریف اشیا در جی‌آر‌پی‌سی}\label{fig:grpc_message}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/grpc_service.png}
+    \caption{نحوه تعریف توابع در جی‌آر‌پی‌سی}\label{fig:grpc_service}
+\end{figure}
 
 برای تشکیل اتصال بین این دو زبان کد پایه \lr{Agent2D} را به‌گونه‌ای تغییر دادیم که
 پس از اتمام مراحل پیش‌پردازش و آماده شدن مدل دنیای بازیکن\LTRfootnote{WorldModel}
