@@ -23,10 +23,12 @@ if __name__ == "__main__":
     print("Await trainer")
     trainer_started.wait()
     model = DDPG('MlpPolicy', gym_env)
-    model = model.load("intermediate_models/DDPG/TEST_700000_steps.zip",env=gym_env)
+    # model = DQN('MlpPolicy', gym_env, exploration_initial_eps=0.05)
+    model = model.load(path="best_models/DDPG_YuShan_Learn.zip",env=gym_env)
     outcomes = {TerminalStates.GOAL:0,TerminalStates.OOB:0,TerminalStates.GOALIE_CATCH:0,TerminalStates.TIMEOUT:-2,TerminalStates.NOT_TERMINAL:0}
     num_ep = 0
     observation, _ = gym_env.reset()
+    # note: in penalty first 2 episodes are always timeout for some reason
     while num_ep < 102:
         # get action from the model
         action, _ = model.predict(observation, deterministic=True)
